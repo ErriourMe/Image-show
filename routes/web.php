@@ -18,6 +18,8 @@ Route::get('/', function () {
 });
 
 Route::get('/makeimage', 'ImageController@index');
+Route::get('/gd', 'GdController@index');
+Route::get('/imagick', 'Imagick@index');
 Route::get('/login', function () {
     return 'erriour';
 });
