@@ -3,50 +3,41 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Imagick;
+use ImagickPixel;
+use ImagickDraw;
 
 class ImagickController extends Controller
 {
     public function index()
     {
         /* Чтение изображения */
-        $im = new Imagick("https://en.meming.world/images/en/thumb/5/5f/Scared_Hamster.jpg/300px-Scared_Hamster.jpg");
+        $url = 'https://en.meming.world/images/en/thumb/5/5f/Scared_Hamster.jpg/300px-Scared_Hamster.jpg';
+        $file = file_get_contents($url);
+        $im = new Imagick();
+        $im->readImageBlob($file);
 
-        /* Миниатюра изображения */
         $im->thumbnailImage(200, null);
 
-        /* Создание рамки для изображения */
-        $im->borderImage(new ImagickPixel("white"), 5, 5);
+        $im->borderImage('white', 5, 5);
 
-        /* Клонируем изображение и зеркально поворачиваем его */
-        $reflection = $im->clone();
-        $reflection->flipImage();
-
-        /* Создаём градиент. Это будет наложением для отражения */
-        $gradient = new Imagick();
-
-        /* Градиент должен быть достаточно большой для изображения и его рамки */
-        $gradient->newPseudoImage($reflection->getImageWidth() + 10, $reflection->getImageHeight() + 10, "gradient:transparent-black");
-
-        /* Наложение градиента на отражение */
-        $reflection->compositeImage($gradient, imagick::COMPOSITE_OVER, 0, 0);
-
-        /* Добавляем прозрачность. Требуется ImageMagick 6.2.9 или выше */
-        $reflection->setImageOpacity( 0.3 );
-
-        /* Создаём пустой холст */
         $canvas = new Imagick();
 
-        /* Холст должен быть достаточно большой, чтобы вместить оба изображения */
         $width = $im->getImageWidth() + 40;
-        $height = ($im->getImageHeight() * 2) + 30;
+        $height = $im->getImageHeight() + 60;
         $canvas->newImage($width, $height, new ImagickPixel("black"));
+
+        $draw = new ImagickDraw();
+        $draw->setFillColor('white');
+        $draw->setFont('Arial');
+        $draw->setFontSize('16');
+
+        $canvas->annotateImage($draw, ($im->getImageWidth() / 2 - 10), 280, 0, "Хомяк");
+
         $canvas->setImageFormat("png");
 
-        /* Наложение оригинального изображения и отражения на холст */
         $canvas->compositeImage($im, imagick::COMPOSITE_OVER, 20, 10);
-        $canvas->compositeImage($reflection, imagick::COMPOSITE_OVER, 20, $im->getImageHeight() + 10);
 
-        /* Вывод изображения */
         header("Content-Type: image/png");
         echo $canvas;
     }
